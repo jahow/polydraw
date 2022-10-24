@@ -1,13 +1,27 @@
-import { Body, Controller, Get, HttpCode, Post, Sse } from '@nestjs/common';
-import { AppService, PositionsUpdate, SessionsUpdate } from './app.service';
-import { interval, map, merge, Observable, of, startWith } from 'rxjs';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Req,
+  Sse,
+} from '@nestjs/common';
+import {
+  ActorsInfo,
+  AppService,
+  PositionsUpdate,
+  SessionsUpdate,
+} from './app.service';
+import { interval, map, merge, Observable, startWith } from 'rxjs';
 import { ActorId, ActorInfo, ActorPosition } from './model';
+import { Request } from 'express';
 
 interface SessionStart {
   type: 'sessionStart';
   data: {
     me: ActorInfo;
-    others: ActorInfo[];
+    others: ActorsInfo;
   };
 }
 interface SessionUpdate {
@@ -35,8 +49,9 @@ export class AppController {
   }
 
   @Sse('/draw')
-  drawSession(): Observable<MessageEvent> {
+  drawSession(@Req() req: Request): Observable<MessageEvent> {
     const actor = this.appService.newSession();
+    req.on('close', () => this.appService.closeSession(actor.id));
     return merge(
       this.appService
         .getPositionsUpdates(actor.id)

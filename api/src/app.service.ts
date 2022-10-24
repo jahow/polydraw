@@ -17,6 +17,7 @@ export type SessionsUpdate = {
   in: { [id: ActorId]: ActorInfo };
   out: { [id: ActorId]: ActorInfo };
 };
+export type ActorsInfo = { [id: ActorId]: ActorInfo };
 
 @Injectable()
 export class AppService {
@@ -38,10 +39,14 @@ export class AppService {
     return actor;
   }
 
-  getOtherSessions(forId: ActorId): ActorInfo[] {
+  closeSession(id: ActorId) {
+    delete this.sessions[id];
+  }
+
+  getOtherSessions(forId: ActorId): ActorsInfo {
     return Object.keys(this.sessions)
       .filter((id) => id !== forId)
-      .map((id) => this.sessions[id]);
+      .reduce((prev, curr) => ({ ...prev, [curr]: this.sessions[curr] }), {});
   }
 
   updatePosition(id: ActorId, position: ActorPosition) {
@@ -49,7 +54,7 @@ export class AppService {
   }
 
   getPositionsUpdates(forId: ActorId): Observable<PositionsUpdate> {
-    return interval(100, animationFrameScheduler).pipe(
+    return interval(16, animationFrameScheduler).pipe(
       map(() => ({ ...this.positions })),
       pairwise(),
       map(([prevPositions, currPositions]) =>
@@ -69,7 +74,7 @@ export class AppService {
   }
 
   getSessionsUpdates(forId: ActorId): Observable<SessionsUpdate> {
-    return interval(100, animationFrameScheduler).pipe(
+    return interval(16, animationFrameScheduler).pipe(
       map(() => ({ ...this.sessions })),
       pairwise(),
       map(([prevSessions, currSessions]) => ({

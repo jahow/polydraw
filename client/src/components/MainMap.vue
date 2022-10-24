@@ -9,21 +9,22 @@ import Map from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import GeoJSON from 'ol/format/GeoJSON';
 import XYZ from 'ol/source/XYZ';
 import { ref } from 'vue';
-import { toLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat } from 'ol/proj';
+import Feature from 'ol/Feature';
+import Point from 'ol/geom/Point';
 
 export default {
   props: {
-    actorPositions: Array,
+    actorPositions: Object,
   },
   emits: ['cursorMove'],
   setup() {
     /** @type {Map} */
     const olMap = ref(null);
 
-    /** @type {VectorLayer} */
+    /** @type {VectorLayer<VectorSource>} */
     const vectorLayer = ref(null);
 
     return {
@@ -59,21 +60,20 @@ export default {
   },
   watch: {
     actorPositions(value) {
-      console.log(value);
-    },
-  },
-  methods: {
-    updateSource(geojson) {
-      const view = this.olMap.getView();
       const source = this.vectorLayer.getSource();
-      const features = new GeoJSON({
-        featureProjection: 'EPSG:3857',
-      }).readFeatures(geojson);
+      const positions = Object.keys(value)
+        .filter((actorId) => value[actorId] !== null)
+        .map((actorId) => {
+          return new Feature({
+            geometry: new Point(fromLonLat(value[actorId])),
+            id: actorId,
+          });
+        });
       source.clear();
-      source.addFeatures(features);
-      view.fit(source.getExtent());
+      source.addFeatures(positions);
     },
   },
+  methods: {},
 };
 </script>
 
