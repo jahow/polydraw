@@ -14,10 +14,24 @@ import { ref } from 'vue';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
+import { Circle, Fill, Stroke, Style } from 'ol/style';
+
+const createPointStyle = (actor) =>
+  new Style({
+    image: new Circle({
+      stroke: new Stroke({ color: 'white', width: 2 }),
+      fill: new Fill({ color: actor.color }),
+      radius: 7,
+    }),
+  });
+
+const styles = {};
+const defaultStyle = createPointStyle({ color: 'grey' });
 
 export default {
   props: {
     actorPositions: Object,
+    actors: Object,
   },
   emits: ['cursorMove'],
   setup() {
@@ -37,6 +51,16 @@ export default {
       source: new VectorSource({
         features: [],
       }),
+      style: (feature) => {
+        if (styles[feature.getId()]) return styles[feature.getId()];
+        else if (this.actors?.[feature.getId()]) {
+          styles[feature.getId()] = createPointStyle(
+            this.actors?.[feature.getId()],
+          );
+          return styles[feature.getId()];
+        }
+        return defaultStyle;
+      },
     });
     this.olMap = new Map({
       target: this.$refs['map-root'],
@@ -64,10 +88,11 @@ export default {
       const positions = Object.keys(value)
         .filter((actorId) => value[actorId] !== null)
         .map((actorId) => {
-          return new Feature({
+          const feature = new Feature({
             geometry: new Point(fromLonLat(value[actorId])),
-            id: actorId,
           });
+          feature.setId(actorId);
+          return feature;
         });
       source.clear();
       source.addFeatures(positions);

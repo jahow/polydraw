@@ -8,6 +8,12 @@ import {
   Observable,
   pairwise,
 } from 'rxjs';
+import {
+  adjectives,
+  animals,
+  uniqueNamesGenerator,
+} from 'unique-names-generator';
+import * as chroma from 'chroma-js';
 
 type ActorsSessionState = { [id: ActorId]: ActorInfo };
 type ActorsPositionState = { [id: ActorId]: ActorPosition };
@@ -30,10 +36,16 @@ export class AppService {
 
   newSession(): ActorInfo {
     const id = Math.floor(Math.random() * 1000000).toString();
+    const name = uniqueNamesGenerator({
+      dictionaries: [adjectives, animals],
+      separator: ' ',
+    });
+    const colors = chroma.brewer.Set1; // see https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=9
+    const color = colors[Math.floor(Math.random() * colors.length)];
     const actor: ActorInfo = {
       id,
-      color: 'orange',
-      name: 'Bob',
+      color,
+      name,
     };
     this.sessions[id] = actor;
     return actor;

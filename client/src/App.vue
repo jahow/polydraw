@@ -4,6 +4,7 @@
       class="grow"
       @cursor-move="handleCursorMove"
       :actor-positions="actorPositions"
+      :actors="actors"
     ></MainMap>
     <StatusBar class="shrink-0" :user="user"></StatusBar>
     <CurrentActors

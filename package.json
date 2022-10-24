@@ -7,8 +7,9 @@
     "lint": "npm run all --command=lint",
     "all": "concurrently -n api,client -c bgGreen.white.bold,bgMagenta.white.bold \"npm run $npm_config_command --prefix api\" \"npm run $npm_config_command --prefix client\"",
     "format": "npm run all --command=format",
-    "start": "npm run all --command=start:dev",
-    "test": "npm run all --command=test"
+    "start": "npm run all --command=start:dev -- \"npm run link-client-api\"",
+    "test": "npm run all --command=test",
+    "link-client-api": "rm -rf api/dist/client && mkdir -p api/dist && ln -s ../../client/dist api/dist/client"
   },
   "main": "index.js",
   "dependencies": {
