@@ -3,18 +3,22 @@
 </template>
 
 <script>
+import 'ol/ol.css';
 import View from 'ol/View';
 import Map from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
-import 'ol/ol.css';
 import XYZ from 'ol/source/XYZ';
-
 import { ref } from 'vue';
+import { toLonLat } from 'ol/proj';
 
 export default {
+  props: {
+    actorPositions: Array,
+  },
+  emits: ['cursorMove'],
   setup() {
     /** @type {Map} */
     const olMap = ref(null);
@@ -49,21 +53,13 @@ export default {
       }),
     });
     this.olMap.on('pointermove', (event) => {
-      const hovered = this.olMap.forEachFeatureAtPixel(
-        event.pixel,
-        (feature) => feature,
-      );
-      if (hovered !== this.selectedFeature) {
-        this.$set(this, 'selectedFeature', hovered);
-      }
+      const coords = this.olMap.getCoordinateFromPixel(event.pixel);
+      this.$emit('cursorMove', toLonLat(coords));
     });
   },
   watch: {
-    geojson(value) {
-      this.updateSource(value);
-    },
-    selectedFeature(value) {
-      this.$emit('select', value);
+    actorPositions(value) {
+      console.log(value);
     },
   },
   methods: {
