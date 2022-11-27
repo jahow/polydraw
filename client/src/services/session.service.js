@@ -24,7 +24,7 @@ export function getUserInfo() {
  */
 const actorsInfo$ = new BehaviorSubject({});
 /**
- * @type {BehaviorSubject<Object.<string, { position: [number, number] | null }>>}
+ * @type {BehaviorSubject<Object.<string, { cursor: [number, number] | null, viewport: [number, number, number, number] }>>}
  */
 const actorsPosition$ = new BehaviorSubject({});
 
@@ -35,7 +35,7 @@ eventSource.addEventListener('sessionStart', ({ data }) => {
   // emit position of all actors as null, waiting for session updates to have actual positions
   const emptyPositions = { ...message.others };
   for (const id in emptyPositions) {
-    emptyPositions[id] = null;
+    emptyPositions[id] = { cursor: null, viewport: [0, 0, 0, 0] };
   }
   actorsPosition$.next(emptyPositions);
 });
@@ -78,16 +78,17 @@ export function getActorsPosition() {
 }
 
 /**
- * @param {[number, number] | null} position
+ * @param {[number, number] | null} cursor
+ * @param {[number, number, number, number]} viewport
  */
-export function updatePosition(position) {
+export function updatePosition(cursor, viewport) {
   userInfo.then((user) => {
     fetch('/api/move', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ id: user.id, position }),
+      body: JSON.stringify({ id: user.id, position: { cursor, viewport } }),
     });
   });
 }

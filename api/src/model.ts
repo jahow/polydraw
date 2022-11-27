@@ -4,4 +4,7 @@ export interface ActorInfo {
   name: string;
   color: string;
 }
-export type ActorPosition = [number, number] | null; // null is when cursor is outside map
+export interface ActorPosition {
+  cursor: [number, number] | null; // null is when cursor is outside map
+  viewport: [number, number, number, number];
+}

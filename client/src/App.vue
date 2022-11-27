@@ -2,7 +2,7 @@
   <div class="flex flex-col h-full relative">
     <MainMap
       class="grow"
-      @cursor-move="handleCursorMove"
+      @new-position="handleNewPosition"
       :actor-positions="actorPositions"
       :actors="actors"
     ></MainMap>
@@ -51,9 +51,9 @@ export default {
     );
   },
   methods: {
-    handleCursorMove: throttle(
+    handleNewPosition: throttle(
       (value) => {
-        updatePosition(value);
+        updatePosition(value.cursor, value.viewport);
       },
       16,
       { leading: false },

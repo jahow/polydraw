@@ -11,29 +11,36 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import XYZ from 'ol/source/XYZ';
 import { ref } from 'vue';
-import { fromLonLat, toLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat, transformExtent } from 'ol/proj';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
+import { fromExtent } from 'ol/geom/Polygon';
+import GeometryCollection from 'ol/geom/GeometryCollection';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
 
-const createPointStyle = (actor) =>
+const createActorPositionStyle = (actor) =>
   new Style({
     image: new Circle({
       stroke: new Stroke({ color: 'white', width: 2 }),
       fill: new Fill({ color: actor.color }),
       radius: 7,
     }),
+    stroke: new Stroke({
+      color: actor.color,
+      lineDash: [4, 4],
+      width: 1,
+    }),
   });
 
 const styles = {};
-const defaultStyle = createPointStyle({ color: 'grey' });
+const defaultStyle = createActorPositionStyle({ color: 'grey' });
 
 export default {
   props: {
     actorPositions: Object,
     actors: Object,
   },
-  emits: ['cursorMove'],
+  emits: ['newPosition'],
   setup() {
     /** @type {Map} */
     const olMap = ref(null);
@@ -54,13 +61,17 @@ export default {
       style: (feature) => {
         if (styles[feature.getId()]) return styles[feature.getId()];
         else if (this.actors?.[feature.getId()]) {
-          styles[feature.getId()] = createPointStyle(
+          styles[feature.getId()] = createActorPositionStyle(
             this.actors?.[feature.getId()],
           );
           return styles[feature.getId()];
         }
         return defaultStyle;
       },
+    });
+    const view = new View({
+      zoom: 0,
+      center: [0, 0],
     });
     this.olMap = new Map({
       target: this.$refs['map-root'],
@@ -72,28 +83,49 @@ export default {
         }),
         this.vectorLayer,
       ],
-      view: new View({
-        zoom: 0,
-        center: [0, 0],
-      }),
+      view,
     });
+    let cursor;
+    let viewport = transformExtent(
+      view.calculateExtent(),
+      'EPSG:3857',
+      'EPSG:4326',
+    );
     this.olMap.on('pointermove', (event) => {
       const coords = this.olMap.getCoordinateFromPixel(event.pixel);
-      this.$emit('cursorMove', toLonLat(coords));
+      cursor = toLonLat(coords);
+      this.$emit('newPosition', { cursor, viewport });
+    });
+    view.on('change', () => {
+      viewport = transformExtent(
+        view.calculateExtent(),
+        'EPSG:3857',
+        'EPSG:4326',
+      );
+      this.$emit('newPosition', { cursor, viewport });
     });
   },
   watch: {
     actorPositions(value) {
       const source = this.vectorLayer.getSource();
-      const positions = Object.keys(value)
-        .filter((actorId) => value[actorId] !== null)
-        .map((actorId) => {
-          const feature = new Feature({
-            geometry: new Point(fromLonLat(value[actorId])),
-          });
-          feature.setId(actorId);
-          return feature;
+      const positions = Object.keys(value).map((actorId) => {
+        const cursor = value[actorId].cursor;
+        const viewport = value[actorId].viewport;
+        const geometries = [];
+        if (cursor !== null) {
+          geometries.push(new Point(fromLonLat(cursor)));
+        }
+        if (viewport !== null) {
+          geometries.push(
+            fromExtent(transformExtent(viewport, 'EPSG:4326', 'EPSG:3857')),
+          );
+        }
+        const feature = new Feature({
+          geometry: new GeometryCollection(geometries),
         });
+        feature.setId(actorId);
+        return feature;
+      });
       source.clear();
       source.addFeatures(positions);
     },
