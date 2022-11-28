@@ -7,6 +7,7 @@
       :actor-positions="actorPositions"
       :actors="actors"
       :features="features"
+      :user="user"
     ></MainMap>
     <StatusBar class="shrink-0" :user="user"></StatusBar>
     <CurrentActors

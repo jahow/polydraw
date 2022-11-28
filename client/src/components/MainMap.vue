@@ -38,6 +38,11 @@ const createActorPositionStyle = (actor) =>
 const styles = {};
 const defaultStyle = createActorPositionStyle({ color: 'grey' });
 
+const dataStyle = new Style({
+  fill: new Fill({ color: 'rgba(255, 255, 255, 0.3)' }),
+  stroke: new Stroke({ width: 3, color: 'grey' }),
+});
+
 const geojson = new GeoJSON({
   dataProjection: 'EPSG:4326',
   featureProjection: 'EPSG:3857',
@@ -48,6 +53,7 @@ export default {
     actorPositions: Object,
     actors: Object,
     features: Array,
+    user: Object,
   },
   emits: ['newPosition', 'newFeature'],
   setup() {
@@ -86,6 +92,10 @@ export default {
       source: new VectorSource({
         features: [],
       }),
+      style: (feature) => {
+        dataStyle.getStroke().setColor(feature.get('color') || 'grey');
+        return dataStyle;
+      },
     });
     const view = new View({
       zoom: 0,
@@ -133,7 +143,9 @@ export default {
       const olFeature = event.feature;
       const feature = {
         id: Math.floor(Math.random() * 1000000),
-        properties: {},
+        properties: {
+          color: this.user.color,
+        },
         geometry: geojson.writeGeometryObject(olFeature.getGeometry()),
       };
       this.$emit('newFeature', feature);
@@ -170,7 +182,7 @@ export default {
       const features = value.map(
         (featureInfo) =>
           new Feature({
-            properties: featureInfo.properties,
+            ...featureInfo.properties,
             geometry: geojson.readGeometry(featureInfo.geometry),
           }),
       );
