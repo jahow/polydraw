@@ -17,6 +17,9 @@ import Point from 'ol/geom/Point';
 import { fromExtent } from 'ol/geom/Polygon';
 import GeometryCollection from 'ol/geom/GeometryCollection';
 import { Circle, Fill, Stroke, Style } from 'ol/style';
+import DrawInteraction from 'ol/interaction/Draw';
+import Collection from 'ol/Collection';
+import GeoJSON from 'ol/format/GeoJSON';
 
 const createActorPositionStyle = (actor) =>
   new Style({
@@ -35,26 +38,36 @@ const createActorPositionStyle = (actor) =>
 const styles = {};
 const defaultStyle = createActorPositionStyle({ color: 'grey' });
 
+const geojson = new GeoJSON({
+  dataProjection: 'EPSG:4326',
+  featureProjection: 'EPSG:3857',
+});
+
 export default {
   props: {
     actorPositions: Object,
     actors: Object,
+    features: Array,
   },
-  emits: ['newPosition'],
+  emits: ['newPosition', 'newFeature'],
   setup() {
     /** @type {Map} */
     const olMap = ref(null);
+
+    /** @type {VectorLayer<VectorSource>} */
+    const actorsLayer = ref(null);
 
     /** @type {VectorLayer<VectorSource>} */
     const vectorLayer = ref(null);
 
     return {
       olMap,
+      actorsLayer,
       vectorLayer,
     };
   },
   mounted() {
-    this.vectorLayer = new VectorLayer({
+    this.actorsLayer = new VectorLayer({
       source: new VectorSource({
         features: [],
       }),
@@ -69,6 +82,11 @@ export default {
         return defaultStyle;
       },
     });
+    this.vectorLayer = new VectorLayer({
+      source: new VectorSource({
+        features: [],
+      }),
+    });
     const view = new View({
       zoom: 0,
       center: [0, 0],
@@ -82,6 +100,7 @@ export default {
           }),
         }),
         this.vectorLayer,
+        this.actorsLayer,
       ],
       view,
     });
@@ -104,10 +123,27 @@ export default {
       );
       this.$emit('newPosition', { cursor, viewport });
     });
+
+    const drawFeatures = new Collection();
+    const draw = new DrawInteraction({
+      type: 'Polygon',
+      features: drawFeatures,
+    });
+    draw.on('drawend', (event) => {
+      const olFeature = event.feature;
+      const feature = {
+        id: Math.floor(Math.random() * 1000000),
+        properties: {},
+        geometry: geojson.writeGeometryObject(olFeature.getGeometry()),
+      };
+      this.$emit('newFeature', feature);
+      drawFeatures.clear();
+    });
+    this.olMap.addInteraction(draw);
   },
   watch: {
     actorPositions(value) {
-      const source = this.vectorLayer.getSource();
+      const source = this.actorsLayer.getSource();
       const positions = Object.keys(value).map((actorId) => {
         const cursor = value[actorId].cursor;
         const viewport = value[actorId].viewport;
@@ -128,6 +164,17 @@ export default {
       });
       source.clear();
       source.addFeatures(positions);
+    },
+    features(value) {
+      this.vectorLayer.getSource().clear();
+      const features = value.map(
+        (featureInfo) =>
+          new Feature({
+            properties: featureInfo.properties,
+            geometry: geojson.readGeometry(featureInfo.geometry),
+          }),
+      );
+      this.vectorLayer.getSource().addFeatures(features);
     },
   },
   methods: {},

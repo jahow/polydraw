@@ -17,6 +17,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
+    "@types/geojson": "^7946.0.10",
     "concurrently": "^7.4.0"
   },
   "license": "MIT"

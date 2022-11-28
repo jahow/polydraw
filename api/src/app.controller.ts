@@ -4,17 +4,19 @@ import {
   Get,
   HttpCode,
   Post,
+  Put,
   Req,
   Sse,
 } from '@nestjs/common';
 import {
   ActorsInfo,
   AppService,
+  FeaturesList,
   PositionsUpdate,
   SessionsUpdate,
 } from './app.service';
 import { interval, map, merge, Observable, startWith } from 'rxjs';
-import { ActorId, ActorInfo, ActorPosition } from './model';
+import { ActorId, ActorInfo, ActorPosition, FeatureInfo } from './model';
 import { Request } from 'express';
 
 interface SessionStart {
@@ -31,8 +33,14 @@ interface SessionUpdate {
     sessions?: SessionsUpdate;
   };
 }
+interface FeaturesUpdate {
+  type: 'featuresUpdate';
+  data: {
+    features?: FeaturesList;
+  };
+}
 
-export type MessageEvent = SessionStart | SessionUpdate;
+export type MessageEvent = SessionStart | SessionUpdate | FeaturesUpdate;
 
 interface ActorUpdateDto {
   id: ActorId;
@@ -69,6 +77,15 @@ export class AppController {
               ({ type: 'sessionUpdate', data: { sessions } } as SessionUpdate),
           ),
         ),
+      this.appService.getFeaturesUpdates().pipe(
+        map(
+          (features) =>
+            ({
+              type: 'featuresUpdate',
+              data: { features },
+            } as FeaturesUpdate),
+        ),
+      ),
     ).pipe(
       startWith({
         type: 'sessionStart',
@@ -86,5 +103,17 @@ export class AppController {
   @HttpCode(200)
   move(@Body() { id, position }: ActorUpdateDto): void {
     this.appService.updatePosition(id, position);
+  }
+
+  @Put('/feature')
+  @HttpCode(200)
+  addFeature(@Body() feature: FeatureInfo): void {
+    this.appService.addFeature(feature);
+  }
+
+  @Get('/data.json')
+  @HttpCode(200)
+  getFeatureCollection() {
+    return this.appService.getFeatureCollection();
   }
 }

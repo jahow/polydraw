@@ -3,8 +3,10 @@
     <MainMap
       class="grow"
       @new-position="handleNewPosition"
+      @new-feature="handleNewFeature"
       :actor-positions="actorPositions"
       :actors="actors"
+      :features="features"
     ></MainMap>
     <StatusBar class="shrink-0" :user="user"></StatusBar>
     <CurrentActors
@@ -18,8 +20,10 @@
 import MainMap from './components/MainMap';
 import StatusBar from './components/StatusBar';
 import {
+  addFeature,
   getActorsInfo,
   getActorsPosition,
+  getFeatures,
   getUserInfo,
   updatePosition,
 } from '@/services/session.service';
@@ -37,10 +41,12 @@ export default {
     const user = ref({});
     const actorPositions = ref({});
     const actors = ref({});
+    const features = ref({});
     return {
       user,
       actors,
       actorPositions,
+      features,
     };
   },
   async mounted() {
@@ -49,6 +55,7 @@ export default {
     getActorsPosition().subscribe(
       (positions) => (this.actorPositions = positions),
     );
+    getFeatures().subscribe((features) => (this.features = features));
   },
   methods: {
     handleNewPosition: throttle(
@@ -58,6 +65,9 @@ export default {
       16,
       { leading: false },
     ),
+    handleNewFeature: (feature) => {
+      addFeature(feature);
+    },
   },
 };
 </script>

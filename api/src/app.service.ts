@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ActorId, ActorInfo, ActorPosition } from './model';
+import {
+  ActorId,
+  ActorInfo,
+  ActorPosition,
+  FeatureInfo,
+  FeatureId,
+} from './model';
 import {
   animationFrameScheduler,
   filter,
@@ -14,9 +20,11 @@ import {
   uniqueNamesGenerator,
 } from 'unique-names-generator';
 import * as chroma from 'chroma-js';
+import { Feature, FeatureCollection } from 'geojson';
 
 type ActorsSessionState = { [id: ActorId]: ActorInfo };
 type ActorsPositionState = { [id: ActorId]: ActorPosition };
+type FeaturesState = { [id: FeatureId]: FeatureInfo };
 
 export type PositionsUpdate = { [id: ActorId]: ActorPosition };
 export type SessionsUpdate = {
@@ -24,6 +32,7 @@ export type SessionsUpdate = {
   out: { [id: ActorId]: ActorInfo };
 };
 export type ActorsInfo = { [id: ActorId]: ActorInfo };
+export type FeaturesList = FeatureInfo[];
 
 @Injectable()
 export class AppService {
@@ -33,6 +42,7 @@ export class AppService {
 
   sessions: ActorsSessionState = {};
   positions: ActorsPositionState = {};
+  features: FeaturesState = {};
 
   newSession(): ActorInfo {
     const id = Math.floor(Math.random() * 1000000).toString();
@@ -109,5 +119,38 @@ export class AppService {
           Object.keys(sessions.out).length > 0,
       ),
     );
+  }
+
+  addFeature(feature: FeatureInfo) {
+    this.features[feature.id] = feature;
+  }
+
+  removeFeature(featureId: FeatureId) {
+    delete this.features[featureId];
+  }
+
+  getFeaturesUpdates(): Observable<FeaturesList> {
+    return interval(16, animationFrameScheduler).pipe(
+      map(() => ({ ...this.features })),
+      pairwise(),
+      map(([prevFeatures, currFeatures]) =>
+        Object.keys(currFeatures)
+          .filter((featureId) => !(featureId in prevFeatures))
+          .map((featureId) => currFeatures[featureId]),
+      ),
+      filter((features) => features.length > 0),
+    );
+  }
+
+  getFeatureCollection(): FeatureCollection {
+    const features: Feature[] = Object.keys(this.features).map((featureId) => ({
+      type: 'Feature',
+      properties: this.features[featureId].properties,
+      geometry: this.features[featureId].geometry,
+    }));
+    return {
+      type: 'FeatureCollection',
+      features,
+    };
   }
 }

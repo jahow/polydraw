@@ -27,6 +27,10 @@ const actorsInfo$ = new BehaviorSubject({});
  * @type {BehaviorSubject<Object.<string, { cursor: [number, number] | null, viewport: [number, number, number, number] }>>}
  */
 const actorsPosition$ = new BehaviorSubject({});
+/**
+ * @type {BehaviorSubject<{id: string, properties: Object, geometry: Object}[]>}
+ */
+const features$ = new BehaviorSubject([]);
 
 eventSource.addEventListener('sessionStart', ({ data }) => {
   const message = JSON.parse(data);
@@ -68,6 +72,11 @@ eventSource.addEventListener('sessionUpdate', ({ data }) => {
     actorsPosition$.next(newPositions);
   }
 });
+eventSource.addEventListener('featuresUpdate', ({ data }) => {
+  const message = JSON.parse(data);
+  const newFeatures = [...features$.value, ...message.features];
+  features$.next(newFeatures);
+});
 
 export function getActorsInfo() {
   return actorsInfo$;
@@ -75,6 +84,10 @@ export function getActorsInfo() {
 
 export function getActorsPosition() {
   return actorsPosition$;
+}
+
+export function getFeatures() {
+  return features$;
 }
 
 /**
@@ -90,5 +103,19 @@ export function updatePosition(cursor, viewport) {
       },
       body: JSON.stringify({ id: user.id, position: { cursor, viewport } }),
     });
+  });
+}
+
+/**
+ *
+ * @param {{id: string, properties: Object, geometry: Object}} feature
+ */
+export function addFeature(feature) {
+  fetch('/api/feature', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(feature),
   });
 }
