@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-white/[0.8] rounded-sm m-4 opacity-50 hover:opacity-100 w-[28%] min-w-[250px] max-h-[500px] transition-opacity flex flex-col"
+    class="bg-white/[0.8] rounded-sm m-4 opacity-60 hover:opacity-100 w-[28%] min-w-[250px] max-h-[500px] transition-opacity flex flex-col"
   >
     <div
       class="p-2 pb-1 overflow-y-auto overflow-x-hidden text-gray-600"
