@@ -125,7 +125,7 @@ export default {
       cursor = toLonLat(coords);
       this.$emit('newPosition', { cursor, viewport });
     });
-    view.on('change', () => {
+    view.on(['change:center', 'change:resolution'], () => {
       viewport = transformExtent(
         view.calculateExtent(),
         'EPSG:3857',
