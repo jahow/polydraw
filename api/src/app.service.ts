@@ -22,12 +22,12 @@ import {
 import * as chroma from 'chroma-js';
 import { Feature, FeatureCollection } from 'geojson';
 
-type ActorsSessionState = { [id: ActorId]: ActorInfo };
+type ActorsInfoState = { [id: ActorId]: ActorInfo };
 type ActorsPositionState = { [id: ActorId]: ActorPosition };
 type FeaturesState = { [id: FeatureId]: FeatureInfo };
 
-export type PositionsUpdate = { [id: ActorId]: ActorPosition };
-export type SessionsUpdate = {
+export type ActorPositionUpdate = { [id: ActorId]: ActorPosition };
+export type ActorInfoUpdate = {
   in: { [id: ActorId]: ActorInfo };
   out: { [id: ActorId]: ActorInfo };
 };
@@ -40,7 +40,7 @@ export class AppService {
     return 'Hello World!';
   }
 
-  sessions: ActorsSessionState = {};
+  infos: ActorsInfoState = {};
   positions: ActorsPositionState = {};
   features: FeaturesState = {};
 
@@ -57,25 +57,25 @@ export class AppService {
       color,
       name,
     };
-    this.sessions[id] = actor;
+    this.infos[id] = actor;
     return actor;
   }
 
   closeSession(id: ActorId) {
-    delete this.sessions[id];
+    delete this.infos[id];
   }
 
-  getOtherSessions(forId: ActorId): ActorsInfo {
-    return Object.keys(this.sessions)
+  getOtherActorsInfo(forId: ActorId): ActorsInfo {
+    return Object.keys(this.infos)
       .filter((id) => id !== forId)
-      .reduce((prev, curr) => ({ ...prev, [curr]: this.sessions[curr] }), {});
+      .reduce((prev, curr) => ({ ...prev, [curr]: this.infos[curr] }), {});
   }
 
   updatePosition(id: ActorId, position: ActorPosition) {
     this.positions[id] = position;
   }
 
-  getPositionsUpdates(forId: ActorId): Observable<PositionsUpdate> {
+  getActorsPositionUpdates(forId: ActorId): Observable<ActorPositionUpdate> {
     return interval(16, animationFrameScheduler).pipe(
       map(() => ({ ...this.positions })),
       pairwise(),
@@ -95,9 +95,9 @@ export class AppService {
     );
   }
 
-  getSessionsUpdates(forId: ActorId): Observable<SessionsUpdate> {
+  getActorsInfoUpdates(forId: ActorId): Observable<ActorInfoUpdate> {
     return interval(16, animationFrameScheduler).pipe(
-      map(() => ({ ...this.sessions })),
+      map(() => ({ ...this.infos })),
       pairwise(),
       map(([prevSessions, currSessions]) => ({
         in: Object.keys(currSessions)
@@ -127,6 +127,12 @@ export class AppService {
 
   removeFeature(featureId: FeatureId) {
     delete this.features[featureId];
+  }
+
+  getAllFeatures(): FeaturesList {
+    return Object.keys(this.features).map(
+      (featureId) => this.features[featureId],
+    );
   }
 
   getFeaturesUpdates(): Observable<FeaturesList> {

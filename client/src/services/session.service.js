@@ -42,25 +42,27 @@ eventSource.addEventListener('sessionStart', ({ data }) => {
     emptyPositions[id] = { cursor: null, viewport: [0, 0, 0, 0] };
   }
   actorsPosition$.next(emptyPositions);
+
+  features$.next(message.features);
 });
-eventSource.addEventListener('sessionUpdate', ({ data }) => {
+eventSource.addEventListener('actorsUpdate', ({ data }) => {
   const message = JSON.parse(data);
   const newInfos = { ...actorsInfo$.value };
   const newPositions = { ...actorsPosition$.value };
 
   // actors getting in
-  if (message.sessions?.in) {
-    Object.keys(message.sessions.in).forEach((id) => {
-      newInfos[id] = message.sessions.in[id];
+  if (message.infos?.in) {
+    Object.keys(message.infos.in).forEach((id) => {
+      newInfos[id] = message.infos.in[id];
     });
   }
   // actors getting out
-  if (message.sessions?.out) {
-    Object.keys(message.sessions.out).forEach((id) => {
+  if (message.infos?.out) {
+    Object.keys(message.infos.out).forEach((id) => {
       delete newInfos[id];
     });
   }
-  if (message.sessions) {
+  if (message.infos) {
     actorsInfo$.next(newInfos);
   }
 

@@ -12,8 +12,8 @@ import {
   ActorsInfo,
   AppService,
   FeaturesList,
-  PositionsUpdate,
-  SessionsUpdate,
+  ActorPositionUpdate,
+  ActorInfoUpdate,
 } from './app.service';
 import { interval, map, merge, Observable, startWith } from 'rxjs';
 import { ActorId, ActorInfo, ActorPosition, FeatureInfo } from './model';
@@ -24,13 +24,14 @@ interface SessionStart {
   data: {
     me: ActorInfo;
     others: ActorsInfo;
+    features: FeaturesList;
   };
 }
-interface SessionUpdate {
-  type: 'sessionUpdate';
+interface ActorsUpdate {
+  type: 'actorsUpdate';
   data: {
-    positions?: PositionsUpdate;
-    sessions?: SessionsUpdate;
+    positions?: ActorPositionUpdate;
+    actors?: ActorInfoUpdate;
   };
 }
 interface FeaturesUpdate {
@@ -40,7 +41,7 @@ interface FeaturesUpdate {
   };
 }
 
-export type MessageEvent = SessionStart | SessionUpdate | FeaturesUpdate;
+export type MessageEvent = SessionStart | ActorsUpdate | FeaturesUpdate;
 
 interface ActorUpdateDto {
   id: ActorId;
@@ -62,21 +63,22 @@ export class AppController {
     req.on('close', () => this.appService.closeSession(actor.id));
     return merge(
       this.appService
-        .getPositionsUpdates(actor.id)
+        .getActorsPositionUpdates(actor.id)
         .pipe(
           map(
             (positions) =>
-              ({ type: 'sessionUpdate', data: { positions } } as SessionUpdate),
+              ({ type: 'actorsUpdate', data: { positions } } as ActorsUpdate),
           ),
         ),
-      this.appService
-        .getSessionsUpdates(actor.id)
-        .pipe(
-          map(
-            (sessions) =>
-              ({ type: 'sessionUpdate', data: { sessions } } as SessionUpdate),
-          ),
+      this.appService.getActorsInfoUpdates(actor.id).pipe(
+        map(
+          (sessions) =>
+            ({
+              type: 'actorsUpdate',
+              data: { actors: sessions },
+            } as ActorsUpdate),
         ),
+      ),
       this.appService.getFeaturesUpdates().pipe(
         map(
           (features) =>
@@ -89,7 +91,11 @@ export class AppController {
     ).pipe(
       startWith({
         type: 'sessionStart',
-        data: { me: actor, others: this.appService.getOtherSessions(actor.id) },
+        data: {
+          me: actor,
+          others: this.appService.getOtherActorsInfo(actor.id),
+          features: this.appService.getAllFeatures(),
+        },
       } as SessionStart),
     );
   }
