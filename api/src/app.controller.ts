@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   Post,
   Put,
@@ -119,6 +120,7 @@ export class AppController {
 
   @Get('/data.json')
   @HttpCode(200)
+  @Header('Content-Type', 'application/geo+json')
   getFeatureCollection() {
     return this.appService.getFeatureCollection();
   }
