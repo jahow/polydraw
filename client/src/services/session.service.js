@@ -25,7 +25,7 @@ export function getUserInfo() {
 export const ActivityType = {
   ACTOR_IN: 1,
   ACTOR_OUT: 2,
-  ACTOR_MESSAGE: 3,
+  ACTOR_SPEAK: 3,
   FEATURE_ADDED: 4,
   FEATURE_CHANGED: 5,
   FEATURE_REMOVED: 6,
@@ -47,8 +47,6 @@ const features$ = new BehaviorSubject([]);
  * @type {ReplaySubject<{type: ActivityType, timestamp: number, args: any[]}>}
  */
 const activity$ = new ReplaySubject();
-
-activity$.subscribe(console.log);
 
 eventSource.addEventListener('sessionStart', ({ data }) => {
   const message = JSON.parse(data);
@@ -117,6 +115,14 @@ eventSource.addEventListener('featuresUpdate', ({ data }) => {
   );
   features$.next(newFeatures);
 });
+eventSource.addEventListener('actorSpeak', ({ data }) => {
+  const message = JSON.parse(data);
+  activity$.next({
+    type: ActivityType.ACTOR_SPEAK,
+    timestamp: Date.now(),
+    args: [message.actor, message.message],
+  });
+});
 
 export function getActorsInfo() {
   return actorsInfo$;
@@ -161,5 +167,20 @@ export function addFeature(feature) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(feature),
+  });
+}
+
+/**
+ * @param {string} message
+ */
+export function speak(message) {
+  userInfo.then((user) => {
+    fetch('/api/speak', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id: user.id, message }),
+    });
   });
 }

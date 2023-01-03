@@ -41,12 +41,28 @@ interface FeaturesUpdate {
     features?: FeaturesList;
   };
 }
+interface ActorSpeak {
+  type: 'actorSpeak';
+  data: {
+    actor: ActorInfo;
+    message: string;
+  };
+}
 
-export type MessageEvent = SessionStart | ActorsUpdate | FeaturesUpdate;
+export type MessageEvent =
+  | SessionStart
+  | ActorsUpdate
+  | FeaturesUpdate
+  | ActorSpeak;
 
 interface ActorUpdateDto {
   id: ActorId;
   position: ActorPosition;
+}
+
+interface ActorSpeakDto {
+  id: ActorId;
+  message: string;
 }
 
 @Controller()
@@ -89,6 +105,15 @@ export class AppController {
             } as FeaturesUpdate),
         ),
       ),
+      this.appService.getActorSpeaks().pipe(
+        map(
+          (speak) =>
+            ({
+              type: 'actorSpeak',
+              data: speak,
+            } as ActorSpeak),
+        ),
+      ),
     ).pipe(
       startWith({
         type: 'sessionStart',
@@ -116,6 +141,12 @@ export class AppController {
   @HttpCode(200)
   addFeature(@Body() feature: FeatureInfo): void {
     this.appService.addFeature(feature);
+  }
+
+  @Post('/speak')
+  @HttpCode(200)
+  speak(@Body() { id, message }: ActorSpeakDto): void {
+    this.appService.actorSpeak(id, message);
   }
 
   @Get('/data.json')

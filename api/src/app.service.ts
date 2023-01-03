@@ -13,6 +13,7 @@ import {
   map,
   Observable,
   pairwise,
+  Subject,
 } from 'rxjs';
 import {
   adjectives,
@@ -43,6 +44,7 @@ export class AppService {
   infos: ActorsInfoState = {};
   positions: ActorsPositionState = {};
   features: FeaturesState = {};
+  spoken = new Subject<{ actor: ActorInfo; message: string }>();
 
   newSession(): ActorInfo {
     const id = Math.floor(Math.random() * 1000000).toString();
@@ -129,6 +131,10 @@ export class AppService {
     delete this.features[featureId];
   }
 
+  actorSpeak(actorId: ActorId, message: string) {
+    this.spoken.next({ actor: this.infos[actorId], message });
+  }
+
   getAllFeatures(): FeaturesList {
     return Object.keys(this.features).map(
       (featureId) => this.features[featureId],
@@ -158,5 +164,9 @@ export class AppService {
       type: 'FeatureCollection',
       features,
     };
+  }
+
+  getActorSpeaks() {
+    return this.spoken;
   }
 }
