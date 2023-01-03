@@ -20,6 +20,7 @@ import { Circle, Fill, Stroke, Style } from 'ol/style';
 import DrawInteraction from 'ol/interaction/Draw';
 import Collection from 'ol/Collection';
 import GeoJSON from 'ol/format/GeoJSON';
+import { getActorsInfo, getActorsPosition } from '@/services/session.service';
 
 const createActorPositionStyle = (actor) =>
   new Style({
@@ -50,8 +51,6 @@ const geojson = new GeoJSON({
 
 export default {
   props: {
-    actorPositions: Object,
-    actors: Object,
     features: Array,
     user: Object,
   },
@@ -66,7 +65,11 @@ export default {
     /** @type {VectorLayer<VectorSource>} */
     const vectorLayer = ref(null);
 
+    const actors = ref({});
+    const actorPositions = ref({});
     return {
+      actors,
+      actorPositions,
       olMap,
       actorsLayer,
       vectorLayer,
@@ -152,6 +155,11 @@ export default {
       drawFeatures.clear();
     });
     this.olMap.addInteraction(draw);
+
+    getActorsInfo().subscribe((actors) => (this.actors = actors));
+    getActorsPosition().subscribe(
+      (positions) => (this.actorPositions = positions),
+    );
   },
   watch: {
     actorPositions(value) {

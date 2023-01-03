@@ -1,4 +1,4 @@
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, ReplaySubject } from 'rxjs';
 
 const eventSource = new EventSource('/api/draw');
 
@@ -20,6 +20,18 @@ export function getUserInfo() {
 }
 
 /**
+ * @enum {number} ActivityType
+ */
+export const ActivityType = {
+  ACTOR_IN: 1,
+  ACTOR_OUT: 2,
+  ACTOR_MESSAGE: 3,
+  FEATURE_ADDED: 4,
+  FEATURE_CHANGED: 5,
+  FEATURE_REMOVED: 6,
+};
+
+/**
  * @type {BehaviorSubject<Object.<string, { name: string, color: string }>>}
  */
 const actorsInfo$ = new BehaviorSubject({});
@@ -31,6 +43,12 @@ const actorsPosition$ = new BehaviorSubject({});
  * @type {BehaviorSubject<{id: string, properties: Object, geometry: Object}[]>}
  */
 const features$ = new BehaviorSubject([]);
+/**
+ * @type {ReplaySubject<{type: ActivityType, timestamp: number, args: any[]}>}
+ */
+const activity$ = new ReplaySubject();
+
+activity$.subscribe(console.log);
 
 eventSource.addEventListener('sessionStart', ({ data }) => {
   const message = JSON.parse(data);
@@ -54,12 +72,24 @@ eventSource.addEventListener('actorsUpdate', ({ data }) => {
   if (message.infos?.in) {
     Object.keys(message.infos.in).forEach((id) => {
       newInfos[id] = message.infos.in[id];
+
+      activity$.next({
+        type: ActivityType.ACTOR_IN,
+        timestamp: Date.now(),
+        args: [message.infos.in[id]],
+      });
     });
   }
   // actors getting out
   if (message.infos?.out) {
     Object.keys(message.infos.out).forEach((id) => {
       delete newInfos[id];
+
+      activity$.next({
+        type: ActivityType.ACTOR_OUT,
+        timestamp: Date.now(),
+        args: [message.infos.out[id]],
+      });
     });
   }
   if (message.infos) {
@@ -76,7 +106,15 @@ eventSource.addEventListener('actorsUpdate', ({ data }) => {
 });
 eventSource.addEventListener('featuresUpdate', ({ data }) => {
   const message = JSON.parse(data);
+  // TODO: this only handles feature addition!
   const newFeatures = [...features$.value, ...message.features];
+  message.features.forEach((feature) =>
+    activity$.next({
+      type: ActivityType.FEATURE_ADDED,
+      timestamp: Date.now(),
+      args: [feature],
+    }),
+  );
   features$.next(newFeatures);
 });
 
@@ -90,6 +128,10 @@ export function getActorsPosition() {
 
 export function getFeatures() {
   return features$;
+}
+
+export function getActivityLog() {
+  return activity$;
 }
 
 /**

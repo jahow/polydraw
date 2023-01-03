@@ -1,19 +1,19 @@
 <template>
-  <div class="flex flex-col h-full relative">
-    <MainMap
-      class="grow"
-      @new-position="handleNewPosition"
-      @new-feature="handleNewFeature"
-      :actor-positions="actorPositions"
-      :actors="actors"
-      :features="features"
-      :user="user"
-    ></MainMap>
+  <div class="flex flex-col h-full">
+    <div class="relative h-full">
+      <MainMap
+        class="grow"
+        @new-position="handleNewPosition"
+        @new-feature="handleNewFeature"
+        :actor-positions="actorPositions"
+        :actors="actors"
+        :features="features"
+        :user="user"
+      ></MainMap>
+      <CurrentActors class="absolute top-0 right-0"></CurrentActors>
+      <ActivityLog class="absolute bottom-0 right-0"></ActivityLog>
+    </div>
     <StatusBar class="shrink-0" :user="user"></StatusBar>
-    <CurrentActors
-      class="absolute top-0 right-0"
-      :actors="actors"
-    ></CurrentActors>
   </div>
 </template>
 
@@ -31,32 +31,26 @@ import {
 import { ref } from 'vue';
 import throttle from 'lodash/throttle';
 import CurrentActors from '@/components/CurrentActors';
+import ActivityLog from '@/components/ActivityLog.vue';
 
 export default {
   components: {
     CurrentActors,
     MainMap,
     StatusBar,
+    ActivityLog,
   },
   setup() {
     const user = ref({});
-    const actorPositions = ref({});
-    const actors = ref({});
     const features = ref({});
     return {
       user,
-      actors,
-      actorPositions,
       features,
     };
   },
   async mounted() {
-    this.user = await getUserInfo();
-    getActorsInfo().subscribe((actors) => (this.actors = actors));
-    getActorsPosition().subscribe(
-      (positions) => (this.actorPositions = positions),
-    );
     getFeatures().subscribe((features) => (this.features = features));
+    this.user = await getUserInfo();
   },
   methods: {
     handleNewPosition: throttle(

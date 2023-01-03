@@ -15,9 +15,18 @@
 </template>
 
 <script>
+import { ref } from 'vue';
+import { getActorsInfo } from '@/services/session.service';
+
 export default {
-  props: {
-    actors: Object,
+  setup() {
+    const actors = ref({});
+    return {
+      actors,
+    };
+  },
+  mounted() {
+    getActorsInfo().subscribe((actors) => (this.actors = actors));
   },
 };
 </script>

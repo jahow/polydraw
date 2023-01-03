@@ -32,7 +32,7 @@ interface ActorsUpdate {
   type: 'actorsUpdate';
   data: {
     positions?: ActorPositionUpdate;
-    actors?: ActorInfoUpdate;
+    infos?: ActorInfoUpdate;
   };
 }
 interface FeaturesUpdate {
@@ -73,10 +73,10 @@ export class AppController {
         ),
       this.appService.getActorsInfoUpdates(actor.id).pipe(
         map(
-          (sessions) =>
+          (infos) =>
             ({
               type: 'actorsUpdate',
-              data: { actors: sessions },
+              data: { infos },
             } as ActorsUpdate),
         ),
       ),
