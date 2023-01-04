@@ -24,7 +24,7 @@
         class="text-gray-900 underline hover:text-black"
         >Camptocamp</a
       >
-      - take a look at my
+      - basemap © CARTO, OpenStreetMap contributors - take a look at my
       <a
         href="https://github.com/jahow/polydraw"
         target="_blank"
