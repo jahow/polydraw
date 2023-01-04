@@ -2,6 +2,8 @@
 
 A collaborative online geo-data editing tool!
 
+![demo.gif](demo.gif)
+
 ## How it works
 
 * A backend application written in [NestJS](https://www.nestjs.com/)
