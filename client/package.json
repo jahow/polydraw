@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build": "vue-cli-service build --dest=../api/dist/client",
     "lint": "vue-cli-service lint",
     "format": "prettier --write \"src/**/*.vue\" \"src/**/*.js\" \"public/**/*.html\"",
-    "start": "vue-cli-service build --mode=debug",
+    "start": "vue-cli-service build --mode=debug --dest=../api/dist/client",
     "start:dev": "vue-cli-service build --mode=debug --watch --dest=../api/dist/client",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

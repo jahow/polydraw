@@ -21,6 +21,24 @@ $ npm run start
 
 And then open http://localhost:3000.
 
+### Using Docker
+
+To build image:
+
+```shell
+$ docker build -t camptocamp/polydraw .
+```
+
+Note: the app will be accessible on the 8080 port.
+
+To run it:
+
+```shell
+$ docker run --init --rm -p 8080:8080 camptocamp/polydraw:latest
+```
+
+> Do not forget the `--init` argument, otherwise the docker image will not respond to SIGINT/SIGTERM
+
 ## Reference
 
 As you may have noticed, this is super similar to https://www.placemark.io/, albeit vastly less powerful. At least it's open source ¯\\\_(ツ)_/¯

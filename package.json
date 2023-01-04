@@ -8,16 +8,13 @@
     "all": "concurrently -n api,client -c bgGreen.white.bold,bgMagenta.white.bold \"npm run $npm_config_command --prefix api\" \"npm run $npm_config_command --prefix client\"",
     "format": "npm run all --command=format",
     "start": "npm run all --command=start:dev",
-    "test": "npm run all --command=test"
+    "test": "npm run all --command=test",
+    "build": "npm run all --command=build",
+    "deps-all": "npm ci && npm ci --prefix client && npm ci --prefix api",
+    "postinstall": "npm install --prefix client && npm install --prefix api"
   },
-  "main": "index.js",
-  "dependencies": {
-    "@nestjs/cli": "^9.1.4",
-    "@nestjs/config": "^2.2.0",
-    "lodash": "^4.17.21"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@types/geojson": "^7946.0.10",
     "concurrently": "^7.4.0"
   },
   "license": "MIT"

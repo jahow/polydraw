@@ -22,8 +22,6 @@ import MainMap from './components/MainMap';
 import StatusBar from './components/StatusBar';
 import {
   addFeature,
-  getActorsInfo,
-  getActorsPosition,
   getFeatures,
   getUserInfo,
   updatePosition,
